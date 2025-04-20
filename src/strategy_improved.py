@@ -251,16 +251,3 @@ class ImprovedMAStrategy(MovingAverageCrossStrategy):
         except Exception as e:
             logger.error(f"Error generating signals: {str(e)}")
             raise
-
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Create strategy instance with optimized parameters
-    strategy = ImprovedMAStrategy()
-    
-    print(f"Created {strategy.name} strategy with optimized parameters")
-    print(f"Fast MA: {strategy.fast_ma_period}, Slow MA: {strategy.slow_ma_period}")
-    print(f"RSI Period: {strategy.rsi_period}, Overbought: {strategy.rsi_overbought}, Oversold: {strategy.rsi_oversold}")

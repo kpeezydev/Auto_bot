@@ -722,16 +722,3 @@ class EnhancedAdaptiveStrategy(MovingAverageCrossStrategy):
         except Exception as e:
             logger.error(f"Error generating signals: {str(e)}")
             raise
-
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Create strategy instance with default parameters
-    strategy = EnhancedAdaptiveStrategy()
-    
-    print(f"Created {strategy.name} strategy")
-    print(f"Base parameters - Fast MA: {strategy.base_fast_ma_period}, Slow MA: {strategy.base_slow_ma_period}")
-    print(f"RSI Period: {strategy.base_rsi_period}, Overbought: {strategy.base_rsi_overbought}, Oversold: {strategy.base_rsi_oversold}")

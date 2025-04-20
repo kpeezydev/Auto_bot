@@ -436,24 +436,3 @@ class ExecutionEngine:
                 'success': False,
                 'message': f"Error: {str(e)}"
             }
-
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # This is just an example, don't run this directly with real API keys
-    logger.info("This is an example. In a real scenario, you would load API keys securely.")
-    
-    # Example of how to use the execution engine
-    # engine = ExecutionEngine(
-    #     exchange_id='binance',
-    #     api_key='YOUR_API_KEY',
-    #     api_secret='YOUR_API_SECRET',
-    #     paper_trading=True
-    # )
-    
-    # Example of executing a signal
-    # result = engine.execute_signal(SignalType.BUY)
-    # print(result)

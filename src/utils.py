@@ -85,14 +85,3 @@ def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> No
         logging.basicConfig(level=logging.INFO, format=log_format)
 
 # Example usage
-if __name__ == "__main__":
-    # Set up logging
-    setup_logging(log_level="INFO")
-    
-    # Load environment variables
-    env_vars = load_env_vars()
-    
-    # Print environment variables (without sensitive data)
-    print(f"Paper Trading: {env_vars['PAPER_TRADING']}")
-    print(f"API Key exists: {'Yes' if env_vars['EXCHANGE_API_KEY'] else 'No'}")
-    print(f"Secret Key exists: {'Yes' if env_vars['EXCHANGE_SECRET_KEY'] else 'No'}")

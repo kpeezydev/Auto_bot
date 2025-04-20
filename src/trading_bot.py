@@ -5,7 +5,7 @@ import pandas as pd
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from data_fetcher import DataFetcher
+from src.data_fetcher import DataFetcher
 from indicators import TechnicalIndicators
 from strategy import Strategy, SignalType
 from execution import ExecutionEngine
@@ -172,25 +172,3 @@ class TradingBot:
             raise
 
 # Example usage
-if __name__ == "__main__":
-    # Set up logging
-    setup_logging(log_level=LOG_LEVEL, log_file=LOG_FILE)
-    
-    # Import strategy
-    from strategy import MovingAverageCrossStrategy
-    
-    # Create strategy instance
-    strategy = MovingAverageCrossStrategy()
-    
-    # Create trading bot instance
-    bot = TradingBot(
-        strategy=strategy,
-        paper_trading=True  # Always use paper trading for testing
-    )
-    
-    # Run the bot once
-    result = bot.run_once()
-    print(f"Trading cycle result: {result}")
-    
-    # Uncomment to run scheduled
-    # bot.run_scheduled(interval_minutes=60)  # Run every hour

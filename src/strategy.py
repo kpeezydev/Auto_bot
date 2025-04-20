@@ -175,39 +175,3 @@ class MovingAverageCrossStrategy(Strategy):
         except Exception as e:
             logger.error(f"Error generating signals: {str(e)}")
             raise
-
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Create sample data with indicators
-    import numpy as np
-    from indicators import TechnicalIndicators
-    
-    # Create sample price data
-    dates = pd.date_range('20210101', periods=100)
-    df = pd.DataFrame({
-        'open': np.random.randn(100).cumsum() + 100,
-        'high': np.random.randn(100).cumsum() + 102,
-        'low': np.random.randn(100).cumsum() + 98,
-        'close': np.random.randn(100).cumsum() + 100,
-        'volume': np.random.randint(1000, 10000, 100)
-    }, index=dates)
-    
-    # Add indicators
-    df_with_indicators = TechnicalIndicators.calculate_all_indicators(df)
-    
-    # Create strategy instance
-    strategy = MovingAverageCrossStrategy()
-    
-    # Generate signals
-    df_with_signals = strategy.generate_signals(df_with_indicators)
-    
-    # Print signals
-    print(df_with_signals[['close', 'sma_20', 'sma_50', 'rsi_14', 'signal']].tail(10))
-    
-    # Get latest signal
-    latest_signal = strategy.get_latest_signal(df_with_signals)
-    print(f"Latest signal: {latest_signal}")

@@ -206,26 +206,3 @@ class TechnicalIndicators:
         except Exception as e:
             logger.error(f"Error calculating indicators: {str(e)}")
             raise
-
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Create sample data
-    import numpy as np
-    dates = pd.date_range('20210101', periods=100)
-    df = pd.DataFrame({
-        'open': np.random.randn(100).cumsum() + 100,
-        'high': np.random.randn(100).cumsum() + 102,
-        'low': np.random.randn(100).cumsum() + 98,
-        'close': np.random.randn(100).cumsum() + 100,
-        'volume': np.random.default_rng().integers(1000, 10000, 100)
-    }, index=dates)
-    
-    # Calculate indicators
-    df_with_indicators = TechnicalIndicators.calculate_all_indicators(df)
-    
-    # Print the result
-    print(df_with_indicators.tail())

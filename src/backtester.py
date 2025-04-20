@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, Optional
 from datetime import datetime
 import matplotlib.pyplot as plt
 from src.strategy import Strategy, SignalType
@@ -239,16 +239,13 @@ class Backtester:
             # Iterate through each candle
             for i in range(1, len(df_with_signals)):
                 current_row = df_with_signals.iloc[i]
-                previous_row = df_with_signals.iloc[i-1]
                 
                 current_time = current_row.name
                 current_price = current_row['close']
                 current_signal = current_row['signal']
                 
                 # Check for ATR if available for stop loss calculation
-                atr_value = None
-                if 'atr_14' in current_row:
-                    atr_value = current_row['atr_14']
+                atr_value = current_row.get('atr_14', None)
                 
                 # Process signals
                 if self.current_trade is None:  # No open position
@@ -402,12 +399,12 @@ class Backtester:
             return_pct = (total_return / self.initial_capital) * 100
             
             # Calculate buy & hold return
-            first_price = self.trades[0].entry_price if self.trades else 0
-            last_price = self.trades[-1].exit_price if self.trades else 0
-            if first_price and last_price:
-                buy_hold_return = (last_price - first_price) / first_price * 100
-            else:
-                buy_hold_return = 0
+            buy_hold_return = 0
+            if self.trades:
+                first_price = self.trades[0].entry_price
+                last_price = self.trades[-1].exit_price
+                if first_price and last_price:
+                    buy_hold_return = (last_price - first_price) / first_price * 100
             
             # Trade metrics
             num_trades = len(self.trades)
@@ -430,7 +427,7 @@ class Backtester:
             num_winning = len(winning_trades)
             num_losing = len(losing_trades)
             
-            win_rate = (num_winning / num_trades) * 100 if num_trades > 0 else 0
+            win_rate = (num_winning / num_trades) * 100
             
             # Average profit/loss
             avg_profit = sum(trade.pnl for trade in winning_trades) / num_winning if num_winning > 0 else 0
@@ -445,7 +442,7 @@ class Backtester:
             equity_array = np.array(self.equity_curve)
             max_equity = np.maximum.accumulate(equity_array)
             drawdown = (max_equity - equity_array) / max_equity * 100
-            max_drawdown_pct = np.max(drawdown)
+            max_drawdown_pct = np.max(drawdown) if len(drawdown) > 0 else 0
             
             return {
                 'total_return': total_return,
@@ -482,10 +479,13 @@ class Backtester:
             
             # Print performance summary
             performance = results['performance']
-            print(f"\nPerformance Summary:")
+            print("\nPerformance Summary:")
             print(f"Total Return: ${performance['total_return']:.2f} ({performance['return_pct']:.2f}%)")
             print(f"Buy & Hold Return: {performance['buy_hold_return']:.2f}%")
             print(f"Number of Trades: {performance['num_trades']}")
+            print(f"Win Rate: {performance['win_rate']:.2f}%")
+            print(f"Profit Factor: {performance['profit_factor']:.2f}")
+            print(f"Max Drawdown: {performance['max_drawdown_pct']:.2f}%")
             # Plot price chart
             ax1.plot(df.index, df['close'], label='Close Price', color='blue', alpha=0.7)
             
@@ -496,23 +496,26 @@ class Backtester:
             
             # Plot trade markers if requested
             if show_trades and trades:
-                # Plot entry points
-                long_entries = [trade.entry_time for trade in trades if trade.direction == 'long']
-                long_entry_prices = [trade.entry_price for trade in trades if trade.direction == 'long']
-                short_entries = [trade.entry_time for trade in trades if trade.direction == 'short']
-                short_entry_prices = [trade.entry_price for trade in trades if trade.direction == 'short']
-                
-                # Plot exit points
-                long_exits = [trade.exit_time for trade in trades if trade.direction == 'long']
-                long_exit_prices = [trade.exit_price for trade in trades if trade.direction == 'long']
-                short_exits = [trade.exit_time for trade in trades if trade.direction == 'short']
-                short_exit_prices = [trade.exit_price for trade in trades if trade.direction == 'short']
+                # Separate trades by direction
+                long_trades = [t for t in trades if t.direction == 'long']
+                short_trades = [t for t in trades if t.direction == 'short']
                 
                 # Plot entries and exits
-                ax1.scatter(long_entries, long_entry_prices, marker='^', color='green', s=100, label='Long Entry')
-                ax1.scatter(short_entries, short_entry_prices, marker='v', color='red', s=100, label='Short Entry')
-                ax1.scatter(long_exits, long_exit_prices, marker='x', color='black', s=100, label='Exit')
-                ax1.scatter(short_exits, short_exit_prices, marker='x', color='black', s=100)
+                if long_trades:
+                    ax1.scatter([t.entry_time for t in long_trades], 
+                               [t.entry_price for t in long_trades], 
+                               marker='^', color='green', s=100, label='Long Entry')
+                    ax1.scatter([t.exit_time for t in long_trades], 
+                               [t.exit_price for t in long_trades], 
+                               marker='x', color='black', s=100, label='Exit')
+                
+                if short_trades:
+                    ax1.scatter([t.entry_time for t in short_trades], 
+                               [t.entry_price for t in short_trades], 
+                               marker='v', color='red', s=100, label='Short Entry')
+                    ax1.scatter([t.exit_time for t in short_trades], 
+                               [t.exit_price for t in short_trades], 
+                               marker='x', color='black', s=100)
             
             # Set up price chart
             ax1.set_title('Backtest Results: Price Chart with Trades')
@@ -570,15 +573,3 @@ if __name__ == "__main__":
     backtester = Backtester(strategy=strategy)
     
     # Fetch historical data
-    data = backtester.fetch_historical_data(
-        exchange_id="binance",
-        symbol="AVAX/USDT",
-        timeframe="1h",
-        limit=1000
-    )
-    
-    # Run backtest
-    results = backtester.run_backtest(data)
-    
-    # Plot results
-    backtester.plot_results(results)

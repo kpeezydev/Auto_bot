@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Optional
 import time
 
-# Default values instead of importing from config
+# Default values
 TRADING_PAIR = "AVAX/USDT"
 TIMEFRAME = "1h"
 EXCHANGE = "binance"
@@ -35,7 +35,7 @@ class DataFetcher:
             self.exchange = exchange_class({
                 'apiKey': api_key,
                 'secret': api_secret,
-                'enableRateLimit': True,  # Respect exchange rate limits
+                'enableRateLimit': True,
             })
             logger.info(f"Successfully initialized connection to {exchange_id}")
         except Exception as e:
@@ -54,6 +54,7 @@ class DataFetcher:
             limit: Number of candles to fetch
             retries: Number of retry attempts if fetching fails
             retry_delay: Delay between retries in seconds
+            since: Timestamp in milliseconds for start of data range
             
         Returns:
             DataFrame with OHLCV data
@@ -62,21 +63,17 @@ class DataFetcher:
             try:
                 logger.info(f"Fetching {limit} {timeframe} candles for {symbol} from {self.exchange_id}")
                 
-                # Fetch the OHLCV data
-                # Binance expects parameters directly in the method call, not in a params dict
+                # Prepare parameters
                 kwargs = {'limit': limit}
                 if since:
                     kwargs['since'] = since
-                logger.debug(f"Fetching OHLCV with kwargs: {kwargs}")
+                
+                # Fetch the OHLCV data
                 ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, **kwargs)
                 
                 # Convert to DataFrame
                 df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-                
-                # Convert timestamp to datetime
                 df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-                
-                # Set timestamp as index
                 df.set_index('timestamp', inplace=True)
                 
                 logger.info(f"Successfully fetched {len(df)} candles")
@@ -90,6 +87,9 @@ class DataFetcher:
                 else:
                     logger.error(f"Failed to fetch OHLCV data after {retries} attempts")
                     raise
+        
+        # This should never be reached due to the raise in the loop
+        return pd.DataFrame()
     
     def fetch_ticker(self, symbol: str = TRADING_PAIR) -> Dict[str, Any]:
         """
@@ -101,8 +101,8 @@ class DataFetcher:
         Returns:
             Dictionary with ticker information
         """
+        logger.info(f"Fetching ticker for {symbol} from {self.exchange_id}")
         try:
-            logger.info(f"Fetching ticker for {symbol} from {self.exchange_id}")
             ticker = self.exchange.fetch_ticker(symbol)
             logger.info(f"Successfully fetched ticker for {symbol}")
             return ticker
@@ -117,8 +117,8 @@ class DataFetcher:
         Returns:
             Dictionary with balance information
         """
+        logger.info(f"Fetching account balance from {self.exchange_id}")
         try:
-            logger.info(f"Fetching account balance from {self.exchange_id}")
             balance = self.exchange.fetch_balance()
             logger.info(f"Successfully fetched account balance")
             return balance
@@ -126,19 +126,3 @@ class DataFetcher:
             logger.error(f"Failed to fetch account balance: {str(e)}")
             raise
 
-# Example usage
-if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # Create data fetcher instance
-    fetcher = DataFetcher()
-    
-    # Fetch OHLCV data
-    ohlcv_data = fetcher.fetch_ohlcv(limit=50)
-    print(ohlcv_data.head())
-    
-    # Fetch ticker
-    ticker = fetcher.fetch_ticker()
-    print(f"Current price: {ticker['last']}")
