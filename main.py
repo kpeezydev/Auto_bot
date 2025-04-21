@@ -2,6 +2,7 @@ import argparse
 import logging
 from src.utils import setup_logging, load_env_vars
 from src.strategy import MovingAverageCrossStrategy
+from src.strategy_enhanced_adaptive import EnhancedAdaptiveStrategy
 from src.trading_bot import TradingBot
 from config.config import LOG_LEVEL, LOG_FILE, TRADING_PAIR, TIMEFRAME, EXCHANGE
 
@@ -19,70 +20,87 @@ def main():
                         help=f'Timeframe for analysis (default: {TIMEFRAME})')
     parser.add_argument('--exchange', type=str, default=EXCHANGE,
                         help=f'Exchange to use (default: {EXCHANGE})')
-    parser.add_argument('--strategy', type=str, default='ma_cross',
-                        help='Trading strategy to use (default: ma_cross)')
+    parser.add_argument('--strategy', type=str, default='enhanced_adaptive',
+                        help='Trading strategy to use (default: enhanced_adaptive)')
     parser.add_argument('--run-once', action='store_true',
                         help='Run the bot once and exit')
     parser.add_argument('--interval', type=int, default=60,
                         help='Interval between trading cycles in minutes (default: 60)')
-    
+
     args = parser.parse_args()
-    
+
     # Set up logging
     setup_logging(log_level=LOG_LEVEL, log_file=LOG_FILE)
     logger = logging.getLogger(__name__)
-    
+
     # Load environment variables
     env_vars = load_env_vars()
-    
+
     # Log startup information
     logger.info(f"Starting trading bot in {args.mode} mode")
     logger.info(f"Trading {args.pair} on {args.exchange} using {args.timeframe} timeframe")
-    
+
     # Create strategy instance
     if args.strategy == 'ma_cross':
         strategy = MovingAverageCrossStrategy()
+    elif args.strategy == 'enhanced_adaptive':
+        strategy = EnhancedAdaptiveStrategy(
+            fast_ma_period=12,
+            slow_ma_period=26,
+            rsi_period=14,
+            rsi_overbought=70,
+            rsi_oversold=30,
+            trend_ema_period=50,
+            volatility_lookback=50,
+            regime_lookback=30,
+            use_adaptive_parameters=False,
+            use_trailing_stop=True,
+            trailing_stop_pct=2.5,
+            min_trade_duration=4,
+            max_trades_per_day=2,
+            btc_specific_optimization=False
+        )
     else:
         logger.error(f"Unknown strategy: {args.strategy}")
         return
-    
+
     # Create trading bot instance
     paper_trading = args.mode == 'paper'
-    
+
     if args.mode == 'backtest':
         # Import backtester
         from src.backtester import Backtester
         from src.data_fetcher import DataFetcher
         from src.indicators import TechnicalIndicators
-        
+
         logger.info("Running backtest")
-        
+
         # Create data fetcher
         data_fetcher = DataFetcher(
             exchange_id=args.exchange,
-            api_key=env_vars.get('EXCHANGE_API_KEY'),
-            api_secret=env_vars.get('EXCHANGE_SECRET_KEY')
+            api_key=env_vars.get('PIONEX_API_KEY'),
+            api_secret=env_vars.get('PIONEX_API_SECRET')
         )
-        
+
         # Fetch historical data
         df = data_fetcher.fetch_ohlcv(
             symbol=args.pair,
             timeframe=args.timeframe,
             limit=500  # Fetch enough data for a meaningful backtest
         )
-        
+
         # Calculate indicators
         df_with_indicators = TechnicalIndicators.calculate_all_indicators(df)
-        
+
         # Create backtester
         backtester = Backtester(strategy=strategy)
-        
+
         # Run backtest
         results = backtester.run(df_with_indicators)
-        
+
         # Plot results
         backtester.plot_results(results)
-        
+
         # Print summary
         print("\nBacktest Summary:")
         print(f"Initial Capital: ${results['initial_capital']:.2f}")
@@ -93,13 +111,14 @@ def main():
         print(f"Win Rate: {results['win_rate']:.2f}%")
         print(f"Profit Factor: {results['profit_factor']:.2f}")
         print(f"Sharpe Ratio: {results['sharpe_ratio']:.2f}")
-        
+
     else:  # paper or live trading
         # Check if we have API keys
-        if not env_vars.get('EXCHANGE_API_KEY') or not env_vars.get('EXCHANGE_SECRET_KEY'):
-            logger.error("API keys not found. Please set EXCHANGE_API_KEY and EXCHANGE_SECRET_KEY in .env file")
+        # Check if API keys are present in the loaded environment variables
+        if not env_vars.get('PIONEX_API_KEY') or not env_vars.get('PIONEX_API_SECRET'):
+            logger.error("API keys not found. Please set PIONEX_API_KEY and PIONEX_API_SECRET as system environment variables.")
             return
-        
+
         # Create trading bot
         bot = TradingBot(
             strategy=strategy,
@@ -108,7 +127,7 @@ def main():
             timeframe=args.timeframe,
             paper_trading=paper_trading
         )
-        
+
         # Run the bot
         if args.run_once:
             logger.info("Running trading bot once")

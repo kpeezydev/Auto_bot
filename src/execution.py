@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Dict, Any, Optional, Tuple
 from enum import Enum
-from strategy import SignalType
+from src.strategy import SignalType
 from config.config import TRADING_PAIR, RISK_PER_TRADE
 
 # Configure logging

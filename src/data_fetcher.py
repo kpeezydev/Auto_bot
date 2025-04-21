@@ -120,7 +120,7 @@ class DataFetcher:
         logger.info(f"Fetching account balance from {self.exchange_id}")
         try:
             balance = self.exchange.fetch_balance()
-            logger.info(f"Successfully fetched account balance")
+            logger.info("Successfully fetched account balance")
             return balance
         except Exception as e:
             logger.error(f"Failed to fetch account balance: {str(e)}")

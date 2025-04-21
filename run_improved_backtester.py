@@ -29,10 +29,10 @@ def parse_arguments():
     parser.add_argument("--risk", type=float, default=1.0,
                         help="Risk percentage per trade (default: 1.0)")
     parser.add_argument("--start-date", type=str,
-                        default=(datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'),
+                        default=(datetime.now() - timedelta(days=365)).strftime(f"%Y-%m-%d'),
                         help="Start date for backtest (format: YYYY-MM-DD, default: 365 days ago)")
     parser.add_argument("--end-date", type=str,
-                        default=datetime.now().strftime('%Y-%m-%d'),
+                        default=datetime.now().strftime(f"%Y-%m-%d'),
                         help="End date for backtest (format: YYYY-MM-DD, default: today)")
     parser.add_argument("--no-plot", action="store_true",
                         help="Disable plotting of results")

@@ -2,14 +2,14 @@ import logging
 import time
 import schedule
 import pandas as pd
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
 
 from src.data_fetcher import DataFetcher
-from indicators import TechnicalIndicators
-from strategy import Strategy, SignalType
-from execution import ExecutionEngine
-from utils import load_env_vars, setup_logging
+from src.indicators import TechnicalIndicators
+from src.strategy import Strategy, SignalType
+from src.execution import ExecutionEngine
+from src.utils import load_env_vars, setup_logging
 from config.config import TRADING_PAIR, TIMEFRAME, EXCHANGE, LOG_LEVEL, LOG_FILE
 
 # Configure logging
@@ -49,14 +49,14 @@ class TradingBot:
         # Initialize components
         self.data_fetcher = DataFetcher(
             exchange_id=exchange_id,
-            api_key=env_vars.get('EXCHANGE_API_KEY'),
-            api_secret=env_vars.get('EXCHANGE_SECRET_KEY')
+            api_key=env_vars.get('PIONEX_API_KEY'),
+            api_secret=env_vars.get('PIONEX_API_SECRET')
         )
         
         self.execution_engine = ExecutionEngine(
             exchange_id=exchange_id,
-            api_key=env_vars.get('EXCHANGE_API_KEY'),
-            api_secret=env_vars.get('EXCHANGE_SECRET_KEY'),
+            api_key=env_vars.get('PIONEX_API_KEY'),
+            api_secret=env_vars.get('PIONEX_API_SECRET'),
             paper_trading=self.paper_trading
         )
         
@@ -64,7 +64,7 @@ class TradingBot:
         logger.info(f"Trading {trading_pair} on {exchange_id} using {timeframe} timeframe")
         logger.info(f"Paper trading: {'Enabled' if self.paper_trading else 'Disabled'}")
     
-    def fetch_and_analyze(self) -> Tuple[pd.DataFrame, SignalType]:
+    def fetch_and_analyze(self) -> 'Tuple[pd.DataFrame, SignalType]':
         """
         Fetch market data and analyze it to generate a trading signal.
         

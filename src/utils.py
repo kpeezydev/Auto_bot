@@ -1,60 +1,61 @@
 import os
 import logging
-from dotenv import load_dotenv
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 def load_env_vars() -> Dict[str, Any]:
     """
-    Load environment variables from .env file.
+    Load environment variables directly from the system environment.
     
     Returns:
         Dictionary with environment variables
     """
     try:
-        # Try to load from config/.env first
-        config_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', '.env')
-        if os.path.exists(config_env_path):
-            load_dotenv(config_env_path)
-            logger.info(f"Loaded environment variables from {config_env_path}")
-        else:
-            # Try to load from root .env
-            root_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-            if os.path.exists(root_env_path):
-                load_dotenv(root_env_path)
-                logger.info(f"Loaded environment variables from {root_env_path}")
-            else:
-                logger.warning("No .env file found. Make sure to set environment variables manually.")
+        # Return relevant environment variables directly from system environment
+        api_key = os.getenv('PIONEX_API_KEY')
+        api_secret = os.getenv('PIONEX_API_SECRET')
+        paper_trading = os.getenv('PAPER_TRADING', 'True').lower() in ('true', '1', 't')
         
-        # Return relevant environment variables
+        if not api_key or not api_secret:
+            logger.warning("PIONEX_API_KEY or PIONEX_API_SECRET not found in environment variables.")
+            # Depending on the application logic, you might want to raise an error here
+            # or handle the missing keys appropriately elsewhere.
+
         return {
-            'EXCHANGE_API_KEY': os.getenv('EXCHANGE_API_KEY'),
-            'EXCHANGE_SECRET_KEY': os.getenv('EXCHANGE_SECRET_KEY'),
-            'PAPER_TRADING': os.getenv('PAPER_TRADING', 'True').lower() in ('true', '1', 't')
+            'PIONEX_API_KEY': api_key,
+            'PIONEX_API_SECRET': api_secret,
+            'PAPER_TRADING': paper_trading
         }
     except Exception as e:
         logger.error(f"Error loading environment variables: {str(e)}")
-        raise
+        # It's often better to return an empty dict or None and handle it upstream
+        # rather than raising an exception here, unless it's critical.
+        return {} # Or raise, depending on desired behavior
 
-def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> None:
+def setup_logging(log_level: Union[str, int] = "INFO", log_file: Optional[str] = None) -> None:
     """
     Set up logging configuration.
     
     Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) as string or int
         log_file: Path to log file (optional)
     """
+    # Define log format at the beginning to ensure it's available in exception handling
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    
     try:
-        # Convert string log level to logging constant
-        numeric_level = getattr(logging, log_level.upper(), None)
-        if not isinstance(numeric_level, int):
-            raise ValueError(f"Invalid log level: {log_level}")
+        # Handle log_level as either string or int
+        numeric_level = log_level
+        if isinstance(log_level, str):
+            numeric_level = getattr(logging, log_level.upper(), None)
+            if not isinstance(numeric_level, int):
+                raise ValueError(f"Invalid log level string: {log_level}")
+        elif not isinstance(log_level, int):
+            raise ValueError(f"Log level must be string or int, got {type(log_level)}")
         
         # Configure logging
-        log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        
         if log_file:
             # Ensure log directory exists
             log_dir = os.path.dirname(log_file)
@@ -78,7 +79,7 @@ def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> No
                 format=log_format
             )
         
-        logger.info(f"Logging level set to {log_level}")
+        logger.info(f"Logging level set to {numeric_level}")
     except Exception as e:
         print(f"Error setting up logging: {str(e)}")
         # Fall back to basic logging

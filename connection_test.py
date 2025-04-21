@@ -65,9 +65,9 @@ print(f"\nAttempting to fetch ticker for {TEST_SYMBOL}...")
 try:
     ticker = exchange.fetch_ticker(TEST_SYMBOL)
     print(f"Ticker for {TEST_SYMBOL} fetched successfully:")
-    print(f"  Last Price: {ticker.get('last')}")
-    print(f"  Bid: {ticker.get('bid')}")
-    print(f"  Ask: {ticker.get('ask')}")
+    print(f"  Last Price: {ticker.get(f"last')}")
+    print(f"  Bid: {ticker.get(f"bid')}")
+    print(f"  Ask: {ticker.get(f"ask')}")
     # print(ticker) # Uncomment for full ticker details
 except ccxt.BadSymbol as e:
     print(f"Error fetching ticker: {e}. Symbol '{TEST_SYMBOL}' might be invalid for {EXCHANGE_ID}.")

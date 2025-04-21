@@ -95,11 +95,22 @@ class Backtester:
                              limit: int = 1000) -> pd.DataFrame:
         try:
             # Set default period if not specified
-            if not end_date:
-                end_date = datetime.now().strftime('%Y-%m-%d')
-            if not start_date:
-                start_dt = datetime.now() - pd.Timedelta(days=365)
-                start_date = start_dt.strftime('%Y-%m-%d')
+            # Always use provided dates or defaults from arguments
+            now = datetime.now()
+            end_date = end_date if end_date else now.strftime('%Y-%m-%d')
+            start_date = start_date if start_date else (now - pd.Timedelta(days=365)).strftime('%Y-%m-%d')
+            
+            # Validate dates are not in the future
+            end_dt = pd.to_datetime(end_date)
+            start_dt = pd.to_datetime(start_date)
+            if end_dt > now:
+                logger.warning(f"End date {end_date} is in the future, using current date instead")
+                end_date = now.strftime('%Y-%m-%d')
+                end_dt = now
+            if start_dt > now:
+                logger.warning(f"Start date {start_date} is in the future, using 365 days ago instead")
+                start_date = (now - pd.Timedelta(days=365)).strftime('%Y-%m-%d')
+                start_dt = now - pd.Timedelta(days=365)
             
             logger.info(f"Fetching historical data for {symbol} on {exchange_id} with {timeframe} timeframe")
             
@@ -193,7 +204,7 @@ class Backtester:
         
         Args:
             price: Current price
-            direction: Trade direction ('long' or 'short')
+            direction: Trade direction (f"long' or 'short')
             atr_value: ATR value if available
             
         Returns:

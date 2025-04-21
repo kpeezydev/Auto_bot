@@ -28,11 +28,15 @@ def parse_arguments():
                         help="Commission percentage (default: 0.1)")
     parser.add_argument("--risk", type=float, default=1.0,
                         help="Risk percentage per trade (default: 1.0)")
+    # Ensure we always use last 730 days (2 years) by default
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=730)
+    
     parser.add_argument("--start-date", type=str,
-                        default=(datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'),
+                        default=start_date.strftime('%Y-%m-%d'),
                         help="Start date for backtest (format: YYYY-MM-DD, default: 365 days ago)")
     parser.add_argument("--end-date", type=str,
-                        default=datetime.now().strftime('%Y-%m-%d'),
+                        default=end_date.strftime('%Y-%m-%d'),
                         help="End date for backtest (format: YYYY-MM-DD, default: today)")
     parser.add_argument("--no-plot", action="store_true",
                         help="Disable plotting of results")
@@ -140,22 +144,22 @@ def main():
         if not args.no_plot:
             backtester.plot_results(results)
         
-        # Print performance summary
+        # Log performance summary
         performance = results['performance']
-        print(f"\nPerformance Summary:")
-        print(f"Period: {data.index[0]} to {data.index[-1]}")
-        print(f"Strategy: {strategy.name}")
-        print(f"Symbol: {args.symbol}, Timeframe: {args.timeframe}")
-        print(f"Initial Capital: ${args.capital:.2f}")
-        print(f"Final Capital: ${backtester.capital:.2f}")
-        print(f"Total Return: ${performance['total_return']:.2f} ({performance['return_pct']:.2f}%)")
-        print(f"Buy & Hold Return: {performance['buy_hold_return']:.2f}%")
-        print(f"Number of Trades: {len(results['trades'])}")
-        print(f"Win Rate: {performance['win_rate']:.2f}%")
-        print(f"Average Profit: ${performance['avg_profit']:.2f}")
-        print(f"Average Loss: ${performance['avg_loss']:.2f}")
-        print(f"Profit Factor: {performance['profit_factor']:.2f}")
-        print(f"Maximum Drawdown: {performance['max_drawdown_pct']:.2f}%")
+        logger.info(f"\nPerformance Summary:")
+        logger.info(f"Period: {data.index[0]} to {data.index[-1]}")
+        logger.info(f"Strategy: {strategy.name}")
+        logger.info(f"Symbol: {args.symbol}, Timeframe: {args.timeframe}")
+        logger.info(f"Initial Capital: ${args.capital:.2f}")
+        logger.info(f"Final Capital: ${backtester.capital:.2f}")
+        logger.info(f"Total Return: ${performance['total_return']:.2f} ({performance['return_pct']:.2f}%)")
+        logger.info(f"Buy & Hold Return: {performance['buy_hold_return']:.2f}%")
+        logger.info(f"Number of Trades: {len(results['trades'])}")
+        logger.info(f"Win Rate: {performance['win_rate']:.2f}%")
+        logger.info(f"Average Profit: ${performance['avg_profit']:.2f}")
+        logger.info(f"Average Loss: ${performance['avg_loss']:.2f}")
+        logger.info(f"Profit Factor: {performance['profit_factor']:.2f}")
+        logger.info(f"Maximum Drawdown: {performance['max_drawdown_pct']:.2f}%")
         
         logger.info("Backtester completed successfully")
         
