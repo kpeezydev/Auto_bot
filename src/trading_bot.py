@@ -1,4 +1,5 @@
 import logging
+import ccxt
 import time
 import schedule
 import pandas as pd
@@ -47,11 +48,7 @@ class TradingBot:
             self.paper_trading = env_vars['PAPER_TRADING']
         
         # Initialize components
-        self.data_fetcher = DataFetcher(
-            exchange_id=exchange_id,
-            api_key=env_vars.get('PIONEX_API_KEY'),
-            api_secret=env_vars.get('PIONEX_API_SECRET')
-        )
+        self.exchange = ccxt.binance()
         
         self.execution_engine = ExecutionEngine(
             exchange_id=exchange_id,
@@ -59,6 +56,9 @@ class TradingBot:
             api_secret=env_vars.get('PIONEX_API_SECRET'),
             paper_trading=self.paper_trading
         )
+
+        # Initialize DataFetcher
+        self.data_fetcher = DataFetcher(exchange_id=exchange_id)
         
         logger.info(f"Initialized trading bot with {strategy.name} strategy")
         logger.info(f"Trading {trading_pair} on {exchange_id} using {timeframe} timeframe")
