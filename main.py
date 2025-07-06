@@ -3,6 +3,7 @@ import logging
 from src.utils import setup_logging, load_env_vars
 from src.strategy import MovingAverageCrossStrategy
 from src.strategy_enhanced_adaptive import EnhancedAdaptiveStrategy
+from src.strategy_enhanced_confluence import EnhancedConfluenceStrategy
 from src.trading_bot import TradingBot
 from config.config import LOG_LEVEL, LOG_FILE, TRADING_PAIR, TIMEFRAME, EXCHANGE
 
@@ -21,7 +22,7 @@ def main():
     parser.add_argument('--exchange', type=str, default=EXCHANGE,
                         help=f'Exchange to use (default: {EXCHANGE})')
     parser.add_argument('--strategy', type=str, default='enhanced_adaptive',
-                        help='Trading strategy to use (default: enhanced_adaptive)')
+                        help='Trading strategy to use: ma_cross, enhanced_adaptive, enhanced_confluence (default: enhanced_adaptive)')
     parser.add_argument('--run-once', action='store_true',
                         help='Run the bot once and exit')
     parser.add_argument('--interval', type=int, default=60,
@@ -59,6 +60,17 @@ def main():
             min_trade_duration=4,
             max_trades_per_day=2,
             btc_specific_optimization=False
+        )
+    elif args.strategy == 'enhanced_confluence':
+        strategy = EnhancedConfluenceStrategy(
+            min_confluence_score=0.6,           # 60% indicator agreement required
+            min_adx_strength=25.0,              # Strong trend requirement
+            min_risk_reward_ratio=2.0,          # Minimum 2:1 risk-reward
+            max_trades_per_day=3,               # Quality over quantity
+            volume_confirmation=True,           # Volume backing required
+            use_dynamic_stops=True,             # Smart stop placement
+            atr_stop_multiplier=2.0,            # ATR multiplier for stops
+            min_trade_spacing_hours=4           # Minimum spacing between trades
         )
     else:
         logger.error(f"Unknown strategy: {args.strategy}")
